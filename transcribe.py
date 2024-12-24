@@ -118,7 +118,7 @@ Enhance the following transcript, starting directly with the speaker format:"""
         
         # Create a semaphore to limit concurrent requests
         # Kinda slow, but I got rate limited when I tried to do more
-        semaphore = asyncio.Semaphore(3)  # Allow up to 3 concurrent requests
+        semaphore = asyncio.Semaphore(5)  # Allow up to 5 concurrent requests
         
         async def process_chunk(i: int, chunk: Tuple[str, io.BytesIO]) -> str:
             text, audio = chunk
