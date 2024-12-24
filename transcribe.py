@@ -117,14 +117,15 @@ Enhance the following transcript, starting directly with the speaker format:"""
         print(f"Enhancing {len(chunks)} chunks...")
         
         # Create a semaphore to limit concurrent requests
-        # Kinda slow, but I got rate limited when I tried to do more
         semaphore = asyncio.Semaphore(5)  # Allow up to 5 concurrent requests
         
         async def process_chunk(i: int, chunk: Tuple[str, io.BytesIO]) -> str:
-            text, audio = chunk
+            # Add delay before acquiring semaphore
+            if i > 0:  # Don't delay first request
+                await asyncio.sleep(self.rate_limit_delay)
+                
             async with semaphore:
-                if i > 0:  # Don't delay first request
-                    await asyncio.sleep(self.rate_limit_delay)
+                text, audio = chunk
                 audio.seek(0)
                 response = await self.model.generate_content_async(
                     [self.PROMPT, text, {"mime_type": "audio/mp3", "data": audio.read()}]
