@@ -110,20 +110,16 @@ Enhance the following transcript, starting directly with the speaker format:"""
     def __init__(self, api_key: str):
         generativeai.configure(api_key=api_key)
         self.model = generativeai.GenerativeModel("gemini-exp-1206")
-        self.rate_limit_delay = 1.0  # seconds between requests
 
     async def enhance_chunks(self, chunks: List[Tuple[str, io.BytesIO]]) -> List[str]:
-        """Enhance multiple transcript chunks concurrently with rate limiting"""
+        """Enhance multiple transcript chunks concurrently"""
         print(f"Enhancing {len(chunks)} chunks...")
         
-        # Create a semaphore to limit concurrent requests
-        semaphore = asyncio.Semaphore(5)  # Allow up to 5 concurrent requests
+        # Try decreasing if you get quota errors
+        semaphore = asyncio.Semaphore(10)
         
         async def process_chunk(i: int, chunk: Tuple[str, io.BytesIO]) -> str:
-            # Add delay before acquiring semaphore
-            if i > 0:  # Don't delay first request
-                await asyncio.sleep(self.rate_limit_delay)
-                
+            # Removed delay
             async with semaphore:
                 text, audio = chunk
                 audio.seek(0)
