@@ -1,0 +1,4 @@
+assemblyai
+google-generativeai
+pydub
+dataclasses-json

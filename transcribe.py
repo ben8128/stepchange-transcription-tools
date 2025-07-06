@@ -109,7 +109,7 @@ Enhance the following transcript, starting directly with the speaker format:"""
 
     def __init__(self, api_key: str):
         generativeai.configure(api_key=api_key)
-        self.model = generativeai.GenerativeModel("gemini-exp-1206")
+        self.model = generativeai.GenerativeModel("gemini-2.5-flash-preview-04-17")
 
     async def enhance_chunks(self, chunks: List[Tuple[str, io.BytesIO]]) -> List[str]:
         """Enhance multiple transcript chunks concurrently"""
@@ -228,6 +228,20 @@ def main():
         # Get transcript
         transcriber = Transcriber(assemblyai_key)
         utterances = transcriber.transcribe(audio_path)
+
+        # Save AssemblyAI transcript before enhancement
+        raw_transcript = "\n\n".join(
+            f"Speaker {u.speaker} {u.timestamp}\n\n{u.text}" for u in utterances
+        )
+        raw_output_path = output_path.with_suffix(".raw.md")
+        raw_output_path.write_text(raw_transcript)
+        print(f"AssemblyAI transcript saved to: {raw_output_path}")
+
+        # Enhance transcript
+        if not google_key:
+            print("Google API key not provided. Skipping enhancement.")
+            return
+        
         
         # Enhance transcript
         enhancer = Enhancer(google_key)
