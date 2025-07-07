@@ -20,7 +20,11 @@ import os
 from typing import List, Tuple
 import assemblyai as aai
 from google import generativeai
-from pydub import AudioSegment
+try:
+    from pydub import AudioSegment
+except ImportError:
+    print("Warning: pydub not available. Audio enhancement will be skipped.")
+    AudioSegment = None
 import asyncio
 import io
 
@@ -157,6 +161,10 @@ def format_chunk(utterances: List[Utterance]) -> str:
 
 def prepare_audio_chunks(audio_path: Path, utterances: List[Utterance]) -> List[Tuple[str, io.BytesIO]]:
     """Prepare audio chunks and their corresponding text"""
+    if AudioSegment is None:
+        print("Audio enhancement not available due to missing pydub dependency.")
+        return []
+        
     def chunk_utterances(utterances: List[Utterance], max_tokens: int = 8000) -> List[List[Utterance]]:
         chunks = []
         current = []
