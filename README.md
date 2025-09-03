@@ -10,8 +10,8 @@ A comprehensive toolkit for transcribing podcast audio, fact-checking content wi
 
 ### 2. Installation
 ```bash
-git clone <your-repo-url>
-cd transcribe
+git clone https://github.com/ben8128/stepchange-transcription-tools.git
+cd stepchange-transcription-tools
 
 # Recommended: Create a virtual environment
 python3 -m venv venv
@@ -20,7 +20,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. API Keys Setup
+### 3. Development Environment (Optional)
+For the best development experience, we recommend using [Claude Code](https://claude.ai/code):
+- Provides intelligent code assistance and debugging
+- Includes a comprehensive CLAUDE.md file with all commands and workflows
+- Offers context-aware help for transcription and fact-checking tasks
+
+### 4. API Keys Setup
 You'll need two API keys:
 
 **Google API Key** (for fact-checking):
@@ -37,7 +43,7 @@ You'll need two API keys:
 2. Get your API key from the dashboard
 3. Set environment variable: `export ASSEMBLYAI_API_KEY="your_key_here"`
 
-### 4. Basic Usage
+### 5. Basic Usage
 ```bash
 # Transcribe an audio file
 python3 transcribe_only.py path/to/your/podcast.m4a
@@ -108,7 +114,7 @@ python3 factcheck_chunked.py transcript.raw.md --chunk-size 25
 ## 📁 File Structure
 
 ```
-transcribe/
+stepchange-transcription-tools/
 ├── README.md                          # This file
 ├── CLAUDE.md                          # Claude Code configuration
 ├── requirements.txt                   # Python dependencies
