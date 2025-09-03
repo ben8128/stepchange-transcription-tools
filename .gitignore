@@ -1,4 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
 myenv/
-podcasts/
-transcription/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# API Keys
+.env
+*.key
+
+# Audio files (can be large)
+*.m4a
+*.mp3
+*.wav
+*.flac
+*.aac
+
+# Generated output files
+transcription/*.md
+transcription/*.csv
+transcription/*.txt
+*.csv
+*_facts*.csv
+*_analysis*.csv
+
+# Temporary files
+temp/
+tmp/
+*.tmp
