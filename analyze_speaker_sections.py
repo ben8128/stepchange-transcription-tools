@@ -56,10 +56,18 @@ def parse_raw_transcript(file_path: Path) -> List[SegmentInfo]:
         if not line:
             continue
             
-        # Check if this is a speaker/timestamp line (format: "A 00:00:00" or "B 00:00:04")
-        if len(line.split()) == 2:
-            parts = line.split()
-            if len(parts[0]) == 1 and ':' in parts[1]:  # Single letter speaker + timestamp
+        # Check if this is a speaker/timestamp line (format: "SpeakerName HH:MM:SS")
+        parts = line.split()
+        if len(parts) >= 2:
+            # Check if last part looks like a timestamp (HH:MM:SS format)
+            timestamp_candidate = parts[-1]
+            if ':' in timestamp_candidate and len(timestamp_candidate.split(':')) == 3:
+                try:
+                    # Validate it's actually a timestamp by parsing
+                    time_parts = timestamp_candidate.split(':')
+                    int(time_parts[0])  # hours
+                    int(time_parts[1])  # minutes  
+                    int(time_parts[2])  # seconds
                 # Save previous segment if exists
                 if current_speaker and current_text:
                     text = ' '.join(current_text).strip()
@@ -68,11 +76,19 @@ def parse_raw_transcript(file_path: Path) -> List[SegmentInfo]:
                         next_timestamp = None
                         for j in range(i + 1, len(lines)):
                             next_line = lines[j].strip()
-                            if len(next_line.split()) == 2:
-                                next_parts = next_line.split()
-                                if len(next_parts[0]) == 1 and ':' in next_parts[1]:
-                                    next_timestamp = next_parts[1]
-                                    break
+                            next_parts = next_line.split()
+                            if len(next_parts) >= 2:
+                                next_timestamp_candidate = next_parts[-1]
+                                if ':' in next_timestamp_candidate and len(next_timestamp_candidate.split(':')) == 3:
+                                    try:
+                                        next_time_parts = next_timestamp_candidate.split(':')
+                                        int(next_time_parts[0])
+                                        int(next_time_parts[1])
+                                        int(next_time_parts[2])
+                                        next_timestamp = next_timestamp_candidate
+                                        break
+                                    except ValueError:
+                                        continue
                         
                         start_seconds = parse_timestamp_to_seconds(current_time)
                         end_seconds = parse_timestamp_to_seconds(next_timestamp) if next_timestamp else start_seconds + 5
@@ -87,11 +103,15 @@ def parse_raw_transcript(file_path: Path) -> List[SegmentInfo]:
                             word_count=len(text.split())
                         ))
                 
-                # Start new segment
-                current_speaker = parts[0]  # Just "A" or "B"
-                current_time = parts[1]     # Just the timestamp
-                current_text = []
-                continue
+                    # Start new segment
+                    current_speaker = ' '.join(parts[:-1])  # Everything except the timestamp
+                    current_time = timestamp_candidate       # The timestamp
+                    current_text = []
+                    continue
+                    
+                except ValueError:
+                    # Not a valid timestamp, treat as regular text
+                    pass
         
         # Add text to current segment
         if current_speaker:

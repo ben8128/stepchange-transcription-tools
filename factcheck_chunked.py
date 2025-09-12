@@ -42,14 +42,15 @@ def parse_raw_transcript(file_path: Path, max_utterances: int = None) -> list:
         if not line:
             continue
             
-        # Check if this is a speaker/timestamp line (format: "SpeakerName 00:00:00")
-        if len(line.split()) == 2:
-            parts = line.split()
-            # Check if second part looks like a timestamp (HH:MM:SS format)
-            if ':' in parts[1] and len(parts[1].split(':')) == 3:
+        # Check if this is a speaker/timestamp line (format: "SpeakerName HH:MM:SS")
+        parts = line.split()
+        if len(parts) >= 2:
+            # Check if last part looks like a timestamp (HH:MM:SS format)
+            timestamp_candidate = parts[-1]
+            if ':' in timestamp_candidate and len(timestamp_candidate.split(':')) == 3:
                 try:
                     # Validate it's actually a timestamp by parsing
-                    time_parts = parts[1].split(':')
+                    time_parts = timestamp_candidate.split(':')
                     int(time_parts[0])  # hours
                     int(time_parts[1])  # minutes
                     int(time_parts[2])  # seconds
@@ -65,8 +66,8 @@ def parse_raw_transcript(file_path: Path, max_utterances: int = None) -> list:
                             utterance_index += 1
                     
                     # Start new utterance
-                    current_speaker = parts[0]  # Any speaker name
-                    current_time = parts[1]     # The timestamp
+                    current_speaker = ' '.join(parts[:-1])  # Everything except the timestamp
+                    current_time = timestamp_candidate       # The timestamp
                     current_text = []
                     continue
                     

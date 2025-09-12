@@ -32,14 +32,15 @@ def parse_raw_transcript(file_path: Path) -> List[Utterance]:
         if not line:
             continue
             
-        # Check if this is a speaker/timestamp line (format: "SpeakerName 00:00:00")
-        if len(line.split()) == 2:
-            parts = line.split()
-            # Check if second part looks like a timestamp (HH:MM:SS format)
-            if ':' in parts[1] and len(parts[1].split(':')) == 3:
+        # Check if this is a speaker/timestamp line (format: "SpeakerName HH:MM:SS")
+        parts = line.split()
+        if len(parts) >= 2:
+            # Check if last part looks like a timestamp (HH:MM:SS format)
+            timestamp_candidate = parts[-1]
+            if ':' in timestamp_candidate and len(timestamp_candidate.split(':')) == 3:
                 try:
                     # Validate it's actually a timestamp by parsing
-                    time_parts = parts[1].split(':')
+                    time_parts = timestamp_candidate.split(':')
                     int(time_parts[0])  # hours
                     int(time_parts[1])  # minutes  
                     int(time_parts[2])  # seconds
@@ -56,8 +57,8 @@ def parse_raw_transcript(file_path: Path) -> List[Utterance]:
                             ))
                     
                     # Start new utterance
-                    current_speaker = parts[0]  # Any speaker name
-                    current_time = parts[1]     # The timestamp
+                    current_speaker = ' '.join(parts[:-1])  # Everything except the timestamp
+                    current_time = timestamp_candidate      # The timestamp
                     current_text = []
                     continue
                     
@@ -93,7 +94,7 @@ Rules:
 4. Never add or invent content
 5. Keep technical terms and proper nouns accurate
 6. PRESERVE all timestamps exactly as provided
-7. Format speaker labels as "SpeakerName (HH:MM:SS):" using the exact speaker names provided in the input
+7. Format speaker labels as "SpeakerName (HH:MM:SS):" using ONLY the speaker name (no "Speaker" prefix, no bold formatting)
 8. Add natural paragraph breaks for readability
 9. Fix run-on sentences by adding appropriate punctuation
 
@@ -107,7 +108,12 @@ Common fixes to make:
 Output format:
 SpeakerName (00:01:23): [enhanced text with proper capitalization and punctuation]
 
-Use the exact speaker names from the input transcript (e.g., if input has "Alice" and "Bob", output should use "Alice (00:01:23):" and "Bob (00:01:45):").
+CRITICAL: Use ONLY the speaker name without any prefix or formatting:
+- CORRECT: "Ben Shwab Eidelson (00:01:23): Enhanced text here."
+- WRONG: "**Speaker Ben Shwab Eidelson (00:01:23):** Enhanced text here."
+- WRONG: "Speaker Ben Shwab Eidelson (00:01:23): Enhanced text here."
+
+Use the exact speaker names from the input transcript, but remove any "Speaker" prefix if present.
 
 IMPORTANT: Keep every timestamp exactly as provided. Do not modify, remove, or approximate timestamps.
 
@@ -115,7 +121,7 @@ Remember: The goal is readability while maintaining authenticity and precise tim
 
     def __init__(self, api_key: str):
         generativeai.configure(api_key=api_key)
-        self.model = generativeai.GenerativeModel("gemini-2.0-flash-exp")
+        self.model = generativeai.GenerativeModel("gemini-2.5-flash")
     
     def enhance_transcript(self, utterances: List[Utterance]) -> str:
         """Enhance the transcript for readability"""
@@ -128,7 +134,7 @@ Remember: The goal is readability while maintaining authenticity and precise tim
             
             # Format chunk for enhancement
             raw_text = "\n\n".join([
-                f"Speaker {u.speaker} ({u.timestamp}): {u.text}"
+                f"{u.speaker} ({u.timestamp}): {u.text}"
                 for u in chunk
             ])
             
@@ -141,12 +147,32 @@ Remember: The goal is readability while maintaining authenticity and precise tim
                 print(f"Error enhancing chunk: {e}")
                 # Fallback to original if enhancement fails
                 fallback = "\n\n".join([
-                    f"Speaker {u.speaker}: {u.text}"
+                    f"{u.speaker} ({u.timestamp}): {u.text}"
                     for u in chunk
                 ])
                 enhanced_chunks.append(fallback)
         
-        return "\n\n---\n\n".join(enhanced_chunks)
+        # Combine all enhanced chunks
+        enhanced_text = "\n\n---\n\n".join(enhanced_chunks)
+        
+        # Post-process to ensure consistent formatting
+        enhanced_text = self.clean_speaker_formatting(enhanced_text)
+        
+        return enhanced_text
+    
+    def clean_speaker_formatting(self, text: str) -> str:
+        """Clean up any inconsistent speaker formatting"""
+        import re
+        
+        # Remove "Speaker " prefix and bold formatting
+        # Patterns: **Speaker Name (timestamp):** or Speaker Name (timestamp):
+        text = re.sub(r'\*\*Speaker ([^(]+) \(([^)]+)\):\*\*', r'\1 (\2):', text)
+        text = re.sub(r'Speaker ([^(]+) \(([^)]+)\):', r'\1 (\2):', text)
+        
+        # Clean up any remaining ** formatting around speaker labels
+        text = re.sub(r'\*\*([^*]+) \(([^)]+)\):\*\*', r'\1 (\2):', text)
+        
+        return text
 
 def main():
     parser = argparse.ArgumentParser(description="Enhance raw transcripts for readability")
